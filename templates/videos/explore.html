@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Explore - PlayHub{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0"><i class="bi bi-compass sv-accent"></i> Explore</h1>
+    <form class="d-flex gap-2" method="get">
+        <select name="category" class="form-select form-select-sm" style="width:auto">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if cat.slug == selected_category %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="sort" class="form-select form-select-sm" style="width:auto">
+            <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
+            <option value="views" {% if selected_sort == "views" %}selected{% endif %}>Most Viewed</option>
+            <option value="likes" {% if selected_sort == "likes" %}selected{% endif %}>Most Liked</option>
+        </select>
+        <button class="btn sv-btn-accent btn-sm" type="submit">Apply</button>
+    </form>
+</div>
+
+{% if query %}
+    <p class="sv-muted">Results for <strong>"{{ query }}"</strong> &mdash; {{ page_obj.paginator.count }} video(s)</p>
+{% endif %}
+
+{% if page_obj %}
+    <div class="sv-video-grid">
+        {% for video in page_obj %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav>
+            <ul class="pagination sv-pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}sort={{ selected_sort }}&page=1">First</a></li>
+                    <li class="page-item"><a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}sort={{ selected_sort }}&page={{ page_obj.previous_page_number }}">Prev</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}sort={{ selected_sort }}&page={{ page_obj.next_page_number }}">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="?{% if query %}q={{ query }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}sort={{ selected_sort }}&page={{ page_obj.paginator.num_pages }}">Last</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="sv-empty"><i class="bi bi-emoji-frown"></i> No videos found.</div>
+{% endif %}
+{% endblock %}

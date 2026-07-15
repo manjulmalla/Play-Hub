@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Watch History - PlayHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-clock-history sv-accent"></i> Watch History</h1>
+    {% if not cleared %}
+        <form method="post" action="{% url 'history:clear_history' %}" onsubmit="return confirm('Clear all watch history?');">
+            {% csrf_token %}
+            <button class="btn sv-btn-outline btn-sm"><i class="bi bi-trash"></i> Clear History</button>
+        </form>
+    {% endif %}
+</div>
+
+{% if cleared %}
+    <div class="alert alert-success">Your watch history has been cleared.</div>
+{% endif %}
+
+{% if continue_watching %}
+    <h2 class="sv-section-title"><i class="bi bi-play-circle"></i> Continue Watching</h2>
+    <div class="sv-video-grid">
+        {% for video in continue_watching %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+{% endif %}
+
+{% if finished %}
+    <h2 class="sv-section-title"><i class="bi bi-check-circle"></i> Finished</h2>
+    <div class="sv-video-grid">
+        {% for video in finished %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+{% endif %}
+
+{% if not continue_watching and not finished and not cleared %}
+    <div class="sv-empty"><i class="bi bi-clock-history"></i> Your watch history is empty. Start watching some videos!</div>
+{% endif %}
+{% endblock %}

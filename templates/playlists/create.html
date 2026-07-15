@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Create Playlist - PlayHub{% endblock %}
+
+{% block content %}
+<div class="sv-form-card">
+    <h1 class="h3 mb-3"><i class="bi bi-collection-play sv-accent"></i> Create Playlist</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="form-check form-switch mb-3">
+            {{ form.is_public }}
+            <label class="form-check-label" for="id_is_public">Public playlist</label>
+        </div>
+        <button type="submit" class="btn sv-btn-accent">Create</button>
+    </form>
+</div>
+{% endblock %}

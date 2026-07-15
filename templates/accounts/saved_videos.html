@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Saved Videos - PlayHub{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3"><i class="bi bi-bookmark-fill sv-accent"></i> Saved Videos</h1>
+{% if videos %}
+    <div class="sv-video-grid">
+        {% for video in videos %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+{% else %}
+    <div class="sv-empty"><i class="bi bi-bookmark"></i> You haven't saved any videos yet.</div>
+{% endif %}
+{% endblock %}

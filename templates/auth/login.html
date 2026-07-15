@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Login - PlayHub{% endblock %}
+
+{% block content %}
+<div class="sv-form-card">
+    <h1 class="h3 mb-3 text-center"><i class="bi bi-box-arrow-in-right sv-accent"></i> Welcome Back</h1>
+    <form method="post" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="mb-3">
+            <label class="form-label" for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="id_password">Password</label>
+            <input type="password" name="password" id="id_password" class="form-control" required>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn sv-btn-accent w-100">Login</button>
+    </form>
+    <div class="text-center mt-3 sv-muted">
+        <a href="{% url 'accounts:password_reset' %}">Forgot password?</a><br>
+        Don't have an account? <a href="{% url 'accounts:register' %}" class="sv-accent">Sign up</a>
+    </div>
+</div>
+{% endblock %}

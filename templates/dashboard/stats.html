@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Platform Statistics - PlayHub{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-bar-chart sv-accent"></i> Platform Statistics</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-people"></i></div><div class="sv-stat-value">{{ total_users }}</div><div class="sv-stat-label">Users</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-collection-play"></i></div><div class="sv-stat-value">{{ total_videos }}</div><div class="sv-stat-label">Videos</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-check-circle"></i></div><div class="sv-stat-value">{{ published_videos }}</div><div class="sv-stat-label">Published</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-eye"></i></div><div class="sv-stat-value">{{ total_views|intcomma }}</div><div class="sv-stat-label">Total Views</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-tags"></i></div><div class="sv-stat-value">{{ total_categories }}</div><div class="sv-stat-label">Categories</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-chat"></i></div><div class="sv-stat-value">{{ total_comments }}</div><div class="sv-stat-label">Comments</div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card"><div class="sv-stat-icon"><i class="bi bi-people"></i></div><div class="sv-stat-value">{{ total_subscriptions }}</div><div class="sv-stat-label">Subscriptions</div></div>
+    </div>
+</div>
+
+<p class="sv-muted">Manage users, videos and comments from the <a href="/admin/" class="sv-accent">Django admin</a>.</p>
+{% endblock %}

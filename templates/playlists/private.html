@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Private Playlist - PlayHub{% endblock %}
+
+{% block content %}
+<div class="sv-empty">
+    <i class="bi bi-lock"></i>
+    <h2 class="h4">This playlist is private</h2>
+    <p>Only the owner can view its contents.</p>
+    <a href="{% url 'playlists:my_playlists' %}" class="btn sv-btn-accent btn-sm">My Playlists</a>
+</div>
+{% endblock %}

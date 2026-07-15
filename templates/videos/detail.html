@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ video.title }} - PlayHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sv-video-title-main { font-size: 1.4rem; font-weight: 700; }
+    .sv-action-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .sv-action-btn { background: var(--sv-surface-2); border: 1px solid var(--sv-border); color: var(--sv-text); border-radius: 999px; padding: 0.4rem 0.9rem; font-weight: 600; }
+    .sv-action-btn:hover { color: #fff; border-color: var(--sv-accent); }
+    .sv-action-btn.active { color: var(--sv-accent); border-color: var(--sv-accent); }
+    .sv-comment-form textarea { min-height: 80px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Main column -->
+    <div class="col-lg-8">
+        <!-- Player -->
+        <div class="sv-player-wrap">
+            <video id="svVideo"
+                   controls
+                   playsinline
+                   data-video-id="{{ video.id }}"
+                   data-progress="{{ progress }}"
+                   data-duration="{{ video.duration }}"
+                   {% if video.hls_playlist %}data-hls="{{ video.hls_playlist.url }}"{% endif %}>
+                <source src="{{ video.video_file.url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <!-- Title + actions -->
+        <h1 class="sv-video-title-main mt-3">{{ video.title }}</h1>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-2">
+            <div class="sv-muted">
+                {{ video.view_count|intcomma }} views &middot; {{ video.created_at|naturaltime }}
+                {% if video.resolution_label %}&middot; {{ video.resolution_label }}{% endif %}
+            </div>
+            <div class="sv-action-bar">
+                <button class="sv-action-btn {% if is_liked %}active{% endif %}" data-like-video="{{ video.slug }}">
+                    <i class="bi bi-heart{% if is_liked %}-fill{% endif %}"></i>
+                    <span class="sv-like-count">{{ video.like_count }}</span>
+                </button>
+                <button class="sv-action-btn {% if is_saved %}active{% endif %}" data-save-video="{{ video.slug }}">
+                    <i class="bi bi-bookmark{% if is_saved %}-fill{% endif %}"></i> Save
+                </button>
+                <button class="sv-action-btn" onclick="navigator.clipboard.writeText(window.location.href);this.innerHTML='<i class=\'bi bi-check2\'></i> Copied'">
+                    <i class="bi bi-share"></i> Share
+                </button>
+                <button class="sv-action-btn" type="button" data-bs-toggle="modal" data-bs-target="#reportModal">
+                    <i class="bi bi-flag"></i> Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Uploader + subscribe -->
+        <div class="d-flex align-items-center gap-3 my-3 p-3" style="background:var(--sv-surface); border-radius:12px; border:1px solid var(--sv-border);">
+            <a href="{% url 'accounts:profile' video.uploader.username %}">
+                {% if video.uploader.profile.avatar %}
+                    <img class="sv-channel-avatar" src="{{ video.uploader.profile.avatar.url }}" alt="{{ video.uploader.username }}" style="width:48px;height:48px;">
+                {% else %}
+                    <span class="sv-channel-avatar" style="width:48px;height:48px;">{{ video.uploader.username|first|upper }}</span>
+                {% endif %}
+            </a>
+            <div class="flex-grow-1">
+                <a href="{% url 'accounts:profile' video.uploader.username %}" class="fw-bold">{{ video.uploader.username }}</a>
+                <div class="sv-muted small">{{ video.uploader.subscribers.count }} subscribers</div>
+            </div>
+            {% if user.is_authenticated and user != video.uploader %}
+                <form method="post" action="{% url 'accounts:toggle_subscription' video.uploader.username %}">
+                    {% csrf_token %}
+                    <button class="btn sv-btn-accent btn-sm" type="submit">
+                        <i class="bi bi-person-plus"></i> Subscribe
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="p-3 mb-3" style="background:var(--sv-surface); border-radius:12px; border:1px solid var(--sv-border); white-space:pre-line;">
+            {{ video.description|default:"No description provided." }}
+            <div class="mt-2">
+                {% for tag in video.tag_list %}<span class="sv-tag">#{{ tag }}</span>{% endfor %}
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <section id="comments">
+            <h3 class="sv-section-title"><i class="bi bi-chat-left-text"></i> Comments</h3>
+
+            {% if user.is_authenticated and video.allow_comments %}
+                <form method="post" action="{% url 'comments:add' video.slug %}" class="sv-comment-form mb-4">
+                    {% csrf_token %}
+                    <textarea name="text" class="form-control" placeholder="Add a comment..." required></textarea>
+                    <div class="text-end mt-2">
+                        <button class="btn sv-btn-accent btn-sm" type="submit">Comment</button>
+                    </div>
+                </form>
+            {% elif not video.allow_comments %}
+                <p class="sv-muted">Comments are disabled for this video.</p>
+            {% else %}
+                <p class="sv-muted"><a href="{% url 'accounts:login' %}">Log in</a> to join the conversation.</p>
+            {% endif %}
+
+            {% for comment in comments %}
+                <div class="sv-comment">
+                    <a href="{% url 'accounts:profile' comment.user.username %}">
+                        {% if comment.user.profile.avatar %}
+                            <img class="sv-channel-avatar" src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.username }}">
+                        {% else %}
+                            <span class="sv-channel-avatar">{{ comment.user.username|first|upper }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="sv-comment-body">
+                        <div class="fw-semibold">{{ comment.user.username }} <span class="sv-muted small">{{ comment.created_at|naturaltime }}</span></div>
+                        <div id="comment-text-{{ comment.id }}">{{ comment.text }}</div>
+
+                        <div class="sv-comment-actions">
+                            {% if user.is_authenticated %}
+                                <button data-like-comment="{{ comment.id }}" class="{% if user in comment.likes.all %}active{% endif %}">
+                                    <i class="bi bi-heart{% if user in comment.likes.all %}-fill{% endif %}"></i>
+                                    <span class="sv-like-count">{{ comment.like_count }}</span>
+                                </button>
+                                <button type="button" onclick="document.getElementById('reply-box-{{ comment.id }}').style.display='block'">
+                                    <i class="bi bi-reply"></i> Reply
+                                </button>
+                            {% endif %}
+                            {% if user == comment.user %}
+                                <button type="button" onclick="document.getElementById('edit-box-{{ comment.id }}').style.display='block';document.getElementById('comment-text-{{ comment.id }}').style.display='none'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <form method="post" action="{% url 'comments:delete' comment.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" onclick="return confirm('Delete this comment?')"><i class="bi bi-trash"></i> Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Edit form -->
+                        <form id="edit-box-{{ comment.id }}" method="post" action="{% url 'comments:edit' comment.id %}" style="display:none; margin-top:0.5rem;">
+                            {% csrf_token %}
+                            <textarea name="text" class="form-control" rows="2">{{ comment.text }}</textarea>
+                            <div class="text-end mt-1"><button class="btn sv-btn-accent btn-sm" type="submit">Save</button></div>
+                        </form>
+
+                        <!-- Reply form -->
+                        {% if user.is_authenticated and video.allow_comments %}
+                            <form id="reply-box-{{ comment.id }}" method="post" action="{% url 'comments:reply' comment.id %}" style="display:none; margin-top:0.5rem;">
+                                {% csrf_token %}
+                                <input type="text" name="text" class="form-control" placeholder="Write a reply..." required>
+                                <div class="text-end mt-1"><button class="btn sv-btn-outline btn-sm" type="submit">Reply</button></div>
+                            </form>
+                        {% endif %}
+
+                        <!-- Replies -->
+                        {% for reply in comment.replies.all %}
+                            <div class="sv-reply">
+                                <div class="sv-comment">
+                                    <a href="{% url 'accounts:profile' reply.user.username %}">
+                                        {% if reply.user.profile.avatar %}
+                                            <img class="sv-channel-avatar" style="width:28px;height:28px;" src="{{ reply.user.profile.avatar.url }}" alt="{{ reply.user.username }}">
+                                        {% else %}
+                                            <span class="sv-channel-avatar" style="width:28px;height:28px;">{{ reply.user.username|first|upper }}</span>
+                                        {% endif %}
+                                    </a>
+                                    <div class="sv-comment-body">
+                                        <div class="fw-semibold">{{ reply.user.username }} <span class="sv-muted small">{{ reply.created_at|naturaltime }}</span></div>
+                                        <div>{{ reply.text }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="sv-muted">Be the first to comment.</p>
+            {% endfor %}
+        </section>
+    </div>
+
+    <!-- Related sidebar -->
+    <div class="col-lg-4">
+        <h3 class="sv-section-title"><i class="bi bi-collection-play"></i> Related</h3>
+        {% for video in related %}
+            <div class="d-flex gap-2 mb-3">
+                <a href="{{ video.get_absolute_url }}" style="flex:0 0 45%">
+                    <div class="sv-thumb-wrap" style="aspect-ratio:16/9">
+                        {% if video.thumbnail %}<img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" loading="lazy">{% else %}<img src="{% static 'img/placeholder.svg' %}" alt="">{% endif %}
+                        {% if video.duration %}<span class="sv-duration-badge">{{ video.formatted_duration }}</span>{% endif %}
+                    </div>
+                </a>
+                <div style="min-width:0">
+                    <a href="{{ video.get_absolute_url }}" class="fw-semibold d-block" style="font-size:0.9rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">{{ video.title }}</a>
+                    <a href="{% url 'accounts:profile' video.uploader.username %}" class="sv-muted small">{{ video.uploader.username }}</a><br>
+                    <span class="sv-muted small">{{ video.view_count|intcomma }} views</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Report modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--sv-surface); color:var(--sv-text); border:1px solid var(--sv-border);">
+            <form method="post" action="{% url 'videos:report' video.slug %}">
+                {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Report this video</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {{ report_form.as_p }}
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn sv-btn-accent btn-sm">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if video.hls_playlist %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+{% endif %}
+<script src="{% static 'js/player.js' %}"></script>
+{% endblock %}

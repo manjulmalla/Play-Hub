@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}PlayHub - Watch &amp; Share Videos{% endblock %}
+
+{% block content %}
+<!-- Hero / featured -->
+{% if featured %}
+<section class="sv-hero">
+    <div class="sv-hero-inner">
+        <h1><i class="bi bi-play-btn-fill sv-accent"></i> PlayHub</h1>
+        <p>The home of original creators. Discover, watch and share videos across every category.</p>
+        <a href="{% url 'videos:explore' %}" class="btn sv-btn-accent btn-sv mt-2">Start Exploring</a>
+    </div>
+</section>
+
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-star-fill"></i> Featured</h2>
+    <div class="sv-video-grid">
+        {% for video in featured %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Continue watching -->
+{% if continue_watching %}
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-play-circle"></i> Continue Watching</h2>
+    <div class="sv-video-grid">
+        {% for video in continue_watching %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Trending -->
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-fire"></i> Trending</h2>
+    <div class="sv-video-grid">
+        {% for video in trending %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+</section>
+
+<!-- Latest -->
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-clock"></i> Latest Uploads</h2>
+    <div class="sv-video-grid">
+        {% for video in latest %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+</section>
+
+<!-- Recommended -->
+{% if recommended %}
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-lightning-charge"></i> Recommended For You</h2>
+    <div class="sv-video-grid">
+        {% for video in recommended %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Popular categories -->
+<section class="mb-4">
+    <h2 class="sv-section-title"><i class="bi bi-tags"></i> Popular Categories</h2>
+    <div class="row g-3">
+        {% for cat in popular_categories %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="{{ cat.get_absolute_url }}" class="sv-stat-card d-block text-center">
+                <div class="sv-stat-icon"><i class="{{ cat.icon }}"></i></div>
+                <div class="mt-2 fw-semibold">{{ cat.name }}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

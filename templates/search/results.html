@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{% if query %}"{{ query }}"{% else %}Search{% endif %} - PlayHub{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3"><i class="bi bi-search sv-accent"></i> {% if query %}Results for "{{ query }}"{% else %}Search{% endif %}</h1>
+
+<!-- Channels -->
+{% if channels %}
+    <h2 class="sv-section-title"><i class="bi bi-people"></i> Channels</h2>
+    <div class="row g-3 mb-4">
+        {% for channel in channels %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="{% url 'accounts:profile' channel.username %}" class="sv-stat-card d-flex align-items-center gap-3">
+                    {% if channel.profile.avatar %}<img class="sv-channel-avatar" src="{{ channel.profile.avatar.url }}" alt="">{% else %}<span class="sv-channel-avatar">{{ channel.username|first|upper }}</span>{% endif %}
+                    <div><div class="fw-semibold">{{ channel.username }}</div><div class="sv-muted small">{{ channel.subscribers.count }} subscribers</div></div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Categories -->
+{% if categories %}
+    <h2 class="sv-section-title"><i class="bi bi-tags"></i> Categories</h2>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for cat in categories %}<a href="{{ cat.get_absolute_url }}" class="sv-pill">{{ cat.name }}</a>{% endfor %}
+    </div>
+{% endif %}
+
+<!-- Videos -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <span class="sv-muted">{{ result_count }} video(s) found</span>
+    <form class="d-flex gap-2" method="get">
+        <input type="hidden" name="q" value="{{ query }}">
+        <select name="category" class="form-select form-select-sm" style="width:auto">
+            <option value="">All Categories</option>
+            {% for cat in all_categories %}<option value="{{ cat.slug }}" {% if cat.slug == selected_category %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+        </select>
+        <select name="sort" class="form-select form-select-sm" style="width:auto">
+            <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
+            <option value="views" {% if selected_sort == "views" %}selected{% endif %}>Most Viewed</option>
+            <option value="likes" {% if selected_sort == "likes" %}selected{% endif %}>Most Liked</option>
+        </select>
+        <button class="btn sv-btn-accent btn-sm" type="submit">Apply</button>
+    </form>
+</div>
+
+{% if page_obj %}
+    <div class="sv-video-grid">
+        {% for video in page_obj %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav>
+            <ul class="pagination sv-pagination justify-content-center">
+                {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?q={{ query }}&sort={{ selected_sort }}&page={{ page_obj.previous_page_number }}">Prev</a></li>{% endif %}
+                <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?q={{ query }}&sort={{ selected_sort }}&page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% elif not channels and not categories %}
+    <div class="sv-empty"><i class="bi bi-search"></i> No results found. Try a different search.</div>
+{% endif %}
+{% endblock %}

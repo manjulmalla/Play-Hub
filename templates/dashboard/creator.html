@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard - PlayHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-graph-up sv-accent"></i> Creator Dashboard</h1>
+    <a href="{% url 'videos:upload' %}" class="btn sv-btn-accent btn-sm"><i class="bi bi-cloud-upload"></i> Upload Video</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-collection-play"></i></div>
+            <div class="sv-stat-value">{{ total_videos }}</div>
+            <div class="sv-stat-label">Videos</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-eye"></i></div>
+            <div class="sv-stat-value">{{ total_views|intcomma }}</div>
+            <div class="sv-stat-label">Total Views</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-people"></i></div>
+            <div class="sv-stat-value">{{ subscribers }}</div>
+            <div class="sv-stat-label">Subscribers</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-heart"></i></div>
+            <div class="sv-stat-value">{{ total_likes|intcomma }}</div>
+            <div class="sv-stat-label">Likes</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-chat"></i></div>
+            <div class="sv-stat-value">{{ comments }}</div>
+            <div class="sv-stat-label">Comments</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-clock"></i></div>
+            <div class="sv-stat-value">{{ watch_seconds|intcomma }}s</div>
+            <div class="sv-stat-label">Watch Time</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-hdd"></i></div>
+            <div class="sv-stat-value" style="font-size:1.2rem;">{{ storage_bytes|filesizeformat }}</div>
+            <div class="sv-stat-label">Storage Used</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="sv-stat-card">
+            <div class="sv-stat-icon"><i class="bi bi-bar-chart"></i></div>
+            <div class="sv-stat-value">{{ total_views|default:0 }}</div>
+            <div class="sv-stat-label">Avg/Video</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="sv-section-title"><i class="bi bi-clock-history"></i> Recent Uploads</h2>
+{% if recent_uploads %}
+    <div class="table-responsive">
+        <table class="table align-middle" style="color:var(--sv-text);">
+            <thead><tr class="sv-muted"><th>Video</th><th>Views</th><th>Likes</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for video in recent_uploads %}
+                    <tr>
+                        <td><a href="{{ video.get_absolute_url }}" class="fw-semibold">{{ video.title }}</a></td>
+                        <td>{{ video.view_count|intcomma }}</td>
+                        <td>{{ video.like_count }}</td>
+                        <td><span class="sv-pill {% if video.status == 'published' %}active{% endif %}">{{ video.status|title }}</span></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="sv-empty"><i class="bi bi-camera-video"></i> No uploads yet.</div>
+{% endif %}
+{% endblock %}

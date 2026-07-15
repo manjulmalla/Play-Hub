@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ channel_user.username }} - PlayHub{% endblock %}
+
+{% block content %}
+<!-- Banner -->
+<div class="sv-channel-banner mb-2">
+    {% if profile.banner %}<img src="{{ profile.banner.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% endif %}
+</div>
+
+<!-- Header -->
+<div class="sv-channel-header mb-4">
+    <div class="sv-channel-avatar-lg">
+        {% if profile.avatar %}<img src="{{ profile.avatar.url }}" alt="{{ channel_user.username }}" style="width:100%;height:100%;border-radius:50%;">{% else %}{{ channel_user.username|first|upper }}{% endif %}
+    </div>
+    <div class="flex-grow-1">
+        <h1 class="h3 mb-0">{{ channel_user.username }}{% if channel_user.first_name %} <span class="sv-muted small">{{ channel_user.first_name }} {{ channel_user.last_name }}</span>{% endif %}</h1>
+        <div class="sv-muted">{{ subscriber_count }} subscribers &middot; {{ video_count }} videos</div>
+        {% if profile.bio %}<p class="mt-2 mb-0">{{ profile.bio }}</p>{% endif %}
+        <div class="mt-1">
+            {% if profile.website %}<a href="{{ profile.website }}" target="_blank" class="sv-muted me-2"><i class="bi bi-link-45deg"></i></a>{% endif %}
+            {% if profile.twitter %}<a href="{{ profile.twitter }}" target="_blank" class="sv-muted me-2"><i class="bi bi-twitter-x"></i></a>{% endif %}
+            {% if profile.instagram %}<a href="{{ profile.instagram }}" target="_blank" class="sv-muted me-2"><i class="bi bi-instagram"></i></a>{% endif %}
+            {% if profile.youtube %}<a href="{{ profile.youtube }}" target="_blank" class="sv-muted me-2"><i class="bi bi-youtube"></i></a>{% endif %}
+        </div>
+    </div>
+    <div>
+        {% if is_owner %}
+            <a href="{% url 'accounts:settings' %}" class="btn sv-btn-outline btn-sm"><i class="bi bi-gear"></i> Customize</a>
+        {% else %}
+            <form method="post" action="{% url 'accounts:toggle_subscription' channel_user.username %}">
+                {% csrf_token %}
+                <button class="btn {% if is_subscribed %}sv-btn-outline{% else %}sv-btn-accent{% endif %} btn-sm" type="submit">
+                    {% if is_subscribed %}<i class="bi bi-check"></i> Subscribed{% else %}<i class="bi bi-person-plus"></i> Subscribe{% endif %}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Videos -->
+<h2 class="sv-section-title"><i class="bi bi-collection-play"></i> Videos</h2>
+{% if videos %}
+    <div class="sv-video-grid">
+        {% for video in videos %}{% include "partials/video_card.html" %}{% endfor %}
+    </div>
+{% else %}
+    <div class="sv-empty"><i class="bi bi-camera-video"></i> No videos uploaded yet.</div>
+{% endif %}
+{% endblock %}

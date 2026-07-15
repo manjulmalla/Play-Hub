@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Videos - PlayHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-collection-play sv-accent"></i> My Videos</h1>
+    <a href="{% url 'videos:upload' %}" class="btn sv-btn-accent btn-sm"><i class="bi bi-cloud-upload me-1"></i> Upload New</a>
+</div>
+
+{% if videos %}
+    <div class="table-responsive">
+        <table class="table align-middle" style="color:var(--sv-text);">
+            <thead>
+                <tr class="sv-muted">
+                    <th>Video</th><th>Status</th><th>Views</th><th>Likes</th><th>Comments</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for video in videos %}
+                    <tr>
+                        <td>
+                            <div class="d-flex gap-2 align-items-center">
+                                <a href="{{ video.get_absolute_url }}" style="flex:0 0 120px">
+                                    <div class="sv-thumb-wrap" style="aspect-ratio:16/9">
+                                        {% if video.thumbnail %}<img src="{{ video.thumbnail.url }}" alt="">{% else %}<img src="/static/img/placeholder.svg" alt="">{% endif %}
+                                    </div>
+                                </a>
+                                <a href="{{ video.get_absolute_url }}" class="fw-semibold">{{ video.title }}</a>
+                            </div>
+                        </td>
+                        <td>
+                            {% if video.status == "published" %}<span class="sv-pill active">Published</span>
+                            {% elif video.status == "processing" %}<span class="sv-pill">Processing</span>
+                            {% else %}<span class="sv-pill">Draft</span>{% endif %}
+                        </td>
+                        <td>{{ video.view_count|intcomma }}</td>
+                        <td>{{ video.like_count }}</td>
+                        <td>{{ video.comment_total }}</td>
+                        <td>
+                            <a href="{% url 'videos:edit' video.slug %}" class="btn sv-icon-btn" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'videos:delete' video.slug %}" style="display:inline;" onsubmit="return confirm('Delete this video permanently?');">
+                                {% csrf_token %}
+                                <button class="btn sv-icon-btn" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="sv-empty"><i class="bi bi-camera-video"></i> You haven't uploaded any videos yet.</div>
+{% endif %}
+{% endblock %}

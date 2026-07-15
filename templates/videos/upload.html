@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Video - PlayHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sv-dropzone.has-file { border-color: var(--sv-accent); background: var(--sv-surface-2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sv-form-card">
+    <h1 class="h3 mb-3"><i class="bi bi-cloud-upload sv-accent"></i> Upload a Video</h1>
+
+    {% if not ffmpeg_available %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> FFmpeg was not detected on this server.
+            Videos will still upload and play, but automatic thumbnails, compression and HLS
+            streaming will be unavailable. A custom thumbnail is recommended.
+        </div>
+    {% endif %}
+
+    <form id="uploadForm" method="post" action="{% url 'videos:upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="sv-dropzone mb-3" id="dropzone">
+            <i class="bi bi-cloud-arrow-up" style="font-size:2.5rem; color:var(--sv-accent);"></i>
+            <p class="mb-1">Drag &amp; drop your video here, or click to browse</p>
+            <p class="sv-muted small mb-0">MP4, WebM, MOV, MKV, AVI &middot; max 300 MB</p>
+            <input type="file" name="video_file" id="videoInput" accept="video/*" class="d-none" required>
+            <div id="fileName" class="mt-2 fw-semibold"></div>
+        </div>
+
+        <div class="sv-progress mb-3 d-none" id="progressWrap">
+            <div class="sv-progress-bar" id="progressBar"></div>
+            <small class="sv-muted" id="progressText">Uploading... 0%</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="id_title">Title</label>
+            {{ form.title }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="id_description">Description</label>
+            {{ form.description }}
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="id_category">Category</label>
+                {{ form.category }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="id_tags">Tags (comma separated)</label>
+                {{ form.tags }}
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="id_thumbnail">Thumbnail (optional)</label>
+            {{ form.thumbnail }}
+        </div>
+        <div class="form-check form-switch mb-4">
+            {{ form.allow_comments }}
+            <label class="form-check-label" for="id_allow_comments">Allow comments</label>
+        </div>
+
+        <button type="submit" class="btn sv-btn-accent" id="submitBtn">Publish Video</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const dropzone = document.getElementById('dropzone');
+    const input = document.getElementById('videoInput');
+    const fileName = document.getElementById('fileName');
+    const form = document.getElementById('uploadForm');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const submitBtn = document.getElementById('submitBtn');
+
+    dropzone.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => {
+        if (input.files.length) {
+            fileName.textContent = input.files[0].name;
+            dropzone.classList.add('has-file');
+        }
+    });
+    ['dragover', 'dragenter'].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach((ev) =>
+        dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+    );
+    dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            fileName.textContent = input.files[0].name;
+            dropzone.classList.add('has-file');
+        }
+    });
+
+    // XHR upload with a real progress bar.
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!input.files.length) { input.click(); return; }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', form.action);
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const pct = Math.round((event.loaded / event.total) * 100);
+                progressWrap.classList.remove('d-none');
+                progressBar.style.width = pct + '%';
+                progressText.textContent = 'Uploading... ' + pct + '%';
+            }
+        });
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200 || xhr.status === 302) {
+                progressText.textContent = 'Processing video...';
+                window.location.href = '{% url "videos:my_videos" %}';
+            } else {
+                progressText.textContent = 'Upload failed. Please try again.';
+            }
+        });
+        xhr.addEventListener('error', () => {
+            progressText.textContent = 'Network error during upload.';
+        });
+        const data = new FormData(form);
+        xhr.send(data);
+    });
+})();
+</script>
+{% endblock %}

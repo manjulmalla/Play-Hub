@@ -1,0 +1,1 @@
+"""PlayHub project package initialiser."""

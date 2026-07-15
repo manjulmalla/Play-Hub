@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Report Video - PlayHub{% endblock %}
+
+{% block content %}
+<div class="sv-form-card">
+    <h1 class="h3 mb-3"><i class="bi bi-flag sv-accent"></i> Report "{{ video.title }}"</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn sv-btn-accent">Submit Report</button>
+            <a href="{{ video.get_absolute_url }}" class="btn sv-btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

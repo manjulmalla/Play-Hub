@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ playlist.title }} - PlayHub{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-0"><i class="bi bi-collection-play sv-accent"></i> {{ playlist.title }}</h1>
+        <p class="sv-muted mb-0">{{ playlist.video_count }} video(s) {% if not playlist.is_public %}&middot; Private{% endif %}</p>
+    </div>
+    {% if playlist.owner == request.user %}
+        <div class="d-flex gap-2">
+            <button class="btn sv-btn-outline btn-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> Add Video</button>
+            <form method="post" action="{% url 'playlists:delete_playlist' playlist.pk %}" style="display:inline;" onsubmit="return confirm('Delete this playlist?');">
+                {% csrf_token %}
+                <button class="btn sv-btn-outline btn-sm"><i class="bi bi-trash"></i></button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+{% if entries %}
+    <div class="list-group" style="background:transparent;">
+        {% for entry in entries %}
+            {% with video=entry.video %}
+            <div class="list-group-item d-flex gap-3 align-items-center" style="background:var(--sv-surface); border:1px solid var(--sv-border); color:var(--sv-text); margin-bottom:0.5rem; border-radius:12px;">
+                <span class="sv-muted">{{ forloop.counter }}</span>
+                <a href="{{ video.get_absolute_url }}" style="flex:0 0 160px;">
+                    <div class="sv-thumb-wrap" style="aspect-ratio:16/9">
+                        {% if video.thumbnail %}<img src="{{ video.thumbnail.url }}" alt="">{% else %}<img src="/static/img/placeholder.svg" alt="">{% endif %}
+                        {% if video.duration %}<span class="sv-duration-badge">{{ video.formatted_duration }}</span>{% endif %}
+                    </div>
+                </a>
+                <div class="flex-grow-1 min-w-0">
+                    <a href="{{ video.get_absolute_url }}" class="fw-semibold d-block">{{ video.title }}</a>
+                    <a href="{% url 'accounts:profile' video.uploader.username %}" class="sv-muted small">{{ video.uploader.username }}</a>
+                </div>
+                {% if playlist.owner == request.user %}
+                    <form method="post" action="{% url 'playlists:remove_video' playlist.pk %}" onsubmit="return confirm('Remove from playlist?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="entry_id" value="{{ entry.id }}">
+                        <button class="btn sv-icon-btn"><i class="bi bi-x-circle"></i></button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="sv-empty"><i class="bi bi-collection-play"></i> This playlist is empty.</div>
+{% endif %}
+
+<!-- Add video modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--sv-surface); color:var(--sv-text); border:1px solid var(--sv-border);">
+            <form method="post" action="{% url 'playlists:add_video' playlist.pk %}">
+                {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">Add a video</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label" for="video_id">Video ID</label>
+                    <input type="number" name="video_id" id="video_id" class="form-control" placeholder="Enter the numeric video ID" required>
+                    <small class="sv-muted">Find the ID in the URL of a video detail page (e.g. /watch/&lt;slug&gt;/?id=123).</small>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn sv-btn-accent btn-sm">Add Video</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
